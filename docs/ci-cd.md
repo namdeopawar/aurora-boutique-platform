@@ -15,3 +15,9 @@
 ## Progressive delivery options
 - Swap Deployments with Argo Rollouts in the chart and add canary steps per env.
 - Gate promotions using Jenkins pipeline conditions and manual approvals for prod.
+
+## Jenkins credentials to create
+- `dockerhub-creds`: Docker Hub username + PAT (for `docker.io/namdeopawar`).
+- `aws-creds`: AWS access key/secret (if using agents off-cluster); otherwise use IRSA/instance role.
+- `kubeconfig` or cluster service account for `kubectl/argocd` usage.
+- `argocd-token` (optional) for CLI login.
