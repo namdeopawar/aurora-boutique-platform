@@ -1,0 +1,4 @@
+[submodule "services/online-boutique"]
+	path = services/online-boutique
+	url = https://github.com/GoogleCloudPlatform/microservices-demo
+	branch = main
