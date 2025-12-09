@@ -79,6 +79,20 @@ PY
         '''
       }
     }
+    stage('Tag release for staging/prod (manual)') {
+      when { branch 'main' }
+      steps {
+        script {
+          input message: 'Promote to staging/prod? This will push a release tag watched by ArgoCD.', ok: 'Tag and push'
+        }
+        sh '''
+          TAG="v0.9.0-aurora-${BUILD_NUMBER}"
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "Pushed tag $TAG. ArgoCD staging/prod will sync it."
+        '''
+      }
+    }
     stage('Trigger ArgoCD Sync') {
       when { branch 'main' }
       steps {
