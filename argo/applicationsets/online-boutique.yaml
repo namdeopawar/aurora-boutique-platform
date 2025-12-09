@@ -10,12 +10,15 @@ spec:
           - env: dev
             namespace: online-boutique-dev
             valuesFile: k8s/helm/online-boutique/values-dev.yaml
+            revision: main
           - env: staging
             namespace: online-boutique-stg
             valuesFile: k8s/helm/online-boutique/values-staging.yaml
+            revision: v*
           - env: prod
             namespace: online-boutique
             valuesFile: k8s/helm/online-boutique/values-prod.yaml
+            revision: v*
   template:
     metadata:
       name: online-boutique-{{env}}
@@ -23,7 +26,7 @@ spec:
       project: platform
       source:
         repoURL: https://github.com/namdeopawar/aurora-boutique-platform.git
-        targetRevision: main
+        targetRevision: "{{revision}}"
         path: k8s/helm/online-boutique
         helm:
           releaseName: online-boutique-{{env}}
