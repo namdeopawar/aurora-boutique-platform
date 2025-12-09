@@ -1,0 +1,1 @@
+Environment overlays (dev/staging/prod) live here if you choose to add Kustomize for ingress, secrets, or policy. Helm value files already cover basic overrides; add Kustomize to stitch in DNS, certificates, and ExternalSecret manifests per environment.

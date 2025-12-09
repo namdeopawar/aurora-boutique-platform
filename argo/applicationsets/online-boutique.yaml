@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: online-boutique
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: dev
+            namespace: online-boutique-dev
+            valuesFile: k8s/helm/online-boutique/values-dev.yaml
+          - env: staging
+            namespace: online-boutique-stg
+            valuesFile: k8s/helm/online-boutique/values-staging.yaml
+          - env: prod
+            namespace: online-boutique
+            valuesFile: k8s/helm/online-boutique/values-prod.yaml
+  template:
+    metadata:
+      name: online-boutique-{{env}}
+    spec:
+      project: platform
+      source:
+        repoURL: https://github.com/namdeopawar/aurora-boutique-platform.git
+        targetRevision: main
+        path: k8s/helm/online-boutique
+        helm:
+          releaseName: online-boutique-{{env}}
+          valueFiles:
+            - {{valuesFile}}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: {{namespace}}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

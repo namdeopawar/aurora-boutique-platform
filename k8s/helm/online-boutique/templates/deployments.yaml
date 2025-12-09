@@ -1,0 +1,70 @@
+{{- range .Values.services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+  labels:
+    app.kubernetes.io/name: {{ .name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+spec:
+  type: {{ default "ClusterIP" .service.type }}
+  ports:
+    - name: http
+      port: {{ default 80 .service.port }}
+      targetPort: {{ default .service.port .service.targetPort }}
+  selector:
+    app.kubernetes.io/name: {{ .name }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  labels:
+    app.kubernetes.io/name: {{ .name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+spec:
+  replicas: {{ default 1 .replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .name }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+    spec:
+      serviceAccountName: {{ default "default" .serviceAccountName }}
+      containers:
+        - name: {{ .name }}
+          image: "{{ $.Values.global.imageRegistry }}/{{ .image }}:{{ .tag }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ default 80 .service.targetPort }}
+              name: http
+          env:
+          {{- range $env := .env }}
+            - name: {{ $env.name }}
+              value: {{ $env.value | quote }}
+          {{- end }}
+          resources:
+            requests:
+              cpu: {{ default "50m" .resources.requests.cpu }}
+              memory: {{ default "64Mi" .resources.requests.memory }}
+            limits:
+              cpu: {{ default "500m" .resources.limits.cpu }}
+              memory: {{ default "512Mi" .resources.limits.memory }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ default 80 .service.targetPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ default 80 .service.targetPort }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+{{- end }}

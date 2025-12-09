@@ -1,0 +1,41 @@
+global:
+  namespace: online-boutique-dev
+  imageRegistry: docker.io/namdeopawar
+
+services:
+  - name: frontend
+    tag: dev
+    replicas: 1
+    hpa:
+      enabled: false
+  - name: productcatalogservice
+    tag: dev
+    replicas: 1
+    hpa:
+      enabled: false
+  - name: cartservice
+    tag: dev
+    replicas: 1
+    hpa:
+      enabled: false
+  - name: checkoutservice
+    tag: dev
+    replicas: 1
+  - name: paymentservice
+    tag: dev
+    replicas: 1
+  - name: shippingservice
+    tag: dev
+    replicas: 1
+  - name: currencyservice
+    tag: dev
+    replicas: 1
+  - name: recommendationservice
+    tag: dev
+    replicas: 1
+  - name: emailservice
+    tag: dev
+    replicas: 1
+  - name: adservice
+    tag: dev
+    replicas: 1

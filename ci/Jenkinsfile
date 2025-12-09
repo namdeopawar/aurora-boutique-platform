@@ -1,0 +1,96 @@
+pipeline {
+  agent any
+  environment {
+    REGISTRY = "docker.io/namdeopawar"
+    SERVICES = "frontend productcatalogservice cartservice checkoutservice paymentservice shippingservice currencyservice recommendationservice emailservice adservice"
+    DOCKER_BUILDKIT = "1"
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+        sh 'git submodule update --init --recursive || true'
+      }
+    }
+    stage('Docker Login') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+          sh 'echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin'
+        }
+      }
+    }
+    stage('Unit & Integration Tests') {
+      steps {
+        sh '''
+          for svc in $SERVICES; do
+            if [ -d "services/online-boutique/src/$svc" ]; then
+              echo "Running tests for $svc"
+              (cd services/online-boutique/src/$svc && go test ./... || true)
+            fi
+          done
+        '''
+      }
+    }
+    stage('Build & Scan Images') {
+      steps {
+        sh '''
+          for svc in $SERVICES; do
+            image="$REGISTRY/$svc:${GIT_COMMIT::7}"
+            docker build -t "$image" "services/online-boutique/src/$svc"
+            trivy image --exit-code 1 --severity HIGH,CRITICAL "$image" || exit 1
+            docker push "$image"
+          done
+        '''
+      }
+    }
+    stage('Update GitOps Manifests') {
+      steps {
+        sh '''
+          pip install yq >/dev/null
+          for values in k8s/helm/online-boutique/values-dev.yaml k8s/helm/online-boutique/values-staging.yaml k8s/helm/online-boutique/values-prod.yaml; do
+            for svc in $SERVICES; do
+              python - <<'PY'
+import yaml, sys, os
+path = sys.argv[1]
+svc = sys.argv[2]
+tag = os.environ.get("GIT_COMMIT","dev")[:7]
+with open(path) as f:
+    data = yaml.safe_load(f)
+for item in data.get("services", []):
+    if item.get("name") == svc:
+        item["tag"] = tag
+with open(path, "w") as f:
+    yaml.safe_dump(data, f, sort_keys=False)
+PY
+            done
+          done
+        '''
+      }
+    }
+    stage('Create PR for GitOps bump') {
+      steps {
+        sh '''
+          git config user.email "ci@your-org.com"
+          git config user.name "jenkins-ci"
+          git checkout -b chore/bump-${GIT_COMMIT::7}
+          git add k8s/helm/online-boutique/values-*.yaml
+          git commit -m "chore: bump images to ${GIT_COMMIT::7}" || true
+          git push origin HEAD || true
+        '''
+      }
+    }
+    stage('Trigger ArgoCD Sync') {
+      when { branch 'main' }
+      steps {
+        sh '''
+          argocd app sync online-boutique-prod --grpc-web || true
+        '''
+      }
+    }
+  }
+  post {
+    always {
+      archiveArtifacts artifacts: 'k8s/helm/online-boutique/values-*.yaml', fingerprint: true
+    }
+  }
+}

@@ -1,0 +1,35 @@
+global:
+  namespace: online-boutique-stg
+  imageRegistry: docker.io/namdeopawar
+
+services:
+  - name: frontend
+    tag: stg
+    replicas: 2
+  - name: productcatalogservice
+    tag: stg
+    replicas: 2
+  - name: cartservice
+    tag: stg
+    replicas: 2
+  - name: checkoutservice
+    tag: stg
+    replicas: 2
+  - name: paymentservice
+    tag: stg
+    replicas: 2
+  - name: shippingservice
+    tag: stg
+    replicas: 2
+  - name: currencyservice
+    tag: stg
+    replicas: 2
+  - name: recommendationservice
+    tag: stg
+    replicas: 2
+  - name: emailservice
+    tag: stg
+    replicas: 1
+  - name: adservice
+    tag: stg
+    replicas: 1

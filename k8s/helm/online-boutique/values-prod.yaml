@@ -1,0 +1,40 @@
+global:
+  namespace: online-boutique
+  imageRegistry: docker.io/namdeopawar
+
+services:
+  - name: frontend
+    tag: prod
+    replicas: 3
+    hpa:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 8
+      cpuUtilization: 60
+  - name: productcatalogservice
+    tag: prod
+    replicas: 3
+  - name: cartservice
+    tag: prod
+    replicas: 3
+  - name: checkoutservice
+    tag: prod
+    replicas: 3
+  - name: paymentservice
+    tag: prod
+    replicas: 3
+  - name: shippingservice
+    tag: prod
+    replicas: 3
+  - name: currencyservice
+    tag: prod
+    replicas: 3
+  - name: recommendationservice
+    tag: prod
+    replicas: 2
+  - name: emailservice
+    tag: prod
+    replicas: 2
+  - name: adservice
+    tag: prod
+    replicas: 2
